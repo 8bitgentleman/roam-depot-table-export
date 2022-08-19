@@ -1,8 +1,9 @@
+/* Original code by matt vogel */
+
 import createObserver from "roamjs-components/dom/createObserver";
 import createIconButton from "roamjs-components/dom/createIconButton"
 
 var runners = {
-  menuItems: [],
   observers: [],
 }
 
@@ -36,55 +37,49 @@ function download_table_as_csv(block_id, separator = ',') {
   document.body.removeChild(link);
 }
 
-function createButton(blockUID, DOMLocation){
-  const createCopyButton = () => {
-      const copySpan = document.createElement("span");
-      copySpan.className = "download-table-button";
+function createButton(blockID, DOMLocation){
+  // create the icon button
+    var mainButton = createIconButton("download");
+    mainButton.classList.add("download-table-button");
+    mainButton.onclick = () => {
+      download_table_as_csv(blockID)
+    }
+    mainButton.setAttribute("style", "float: right; z-index: 10;");
 
-      const copyButton = document.createElement("button");
-      copyButton.innerText  = `Copy`;
-      copyButton.className = "bp3-button bp3-minimal bp3-small";
-      copyButton.id = blockUID;
-      copySpan.appendChild(copyButton);
-
-      return copySpan;
-  };
-
-  // check if a button exists
-  let checkForButton = DOMLocation.getElementsByClassName('download-table-button').length;
-
-  if (!checkForButton) {
-      var mainButton = createIconButton("download");
-      var settingsBar = DOMLocation.getElementsByTagName("th")[0];
-      
-      mainButton.addEventListener("click", copyCode, false);
-
-      settingsBar.insertAdjacentElement("beforebegin", mainButton);
-      console.log(DOMLocation.getElementsByClassName('download-table-button'))
-  }   
+    // attr tables have a slightly different HTML structure 
+    if (DOMLocation.querySelector("thead")) {
+      var firstCell = DOMLocation.getElementsByTagName("th")[0]
+    } else {
+        var firstCell = DOMLocation.getElementsByTagName("td")[0]
+    }
+    
+    firstCell.insertAdjacentElement("beforeend", mainButton);
+  
 }
 
 
 
 async function onload({ extensionAPI }) {
-  // set defaults if they dont' exist
+// create observer
   var tableObserver = createObserver(() => {
     if ( document.querySelectorAll(".roam-table")) {
         let tableBlocks = document.querySelectorAll(".roam-table")
         for (let i = 0; i < tableBlocks.length; i++) {
-          // get the blockuid from the parent div.id
-          let blockID = tableBlocks[i].closest(".roam-block").id
-          let blockUID = blockID.split("-")
-          blockUID = blockUID[blockUID.length - 1]
-
-          // add the copy button
-          const downloadButton =  createButton(blockUID, tableBlocks[i])
-          downloadButton.onclick = () => {
-            download_table_as_csv(blockID)
+          // only move forward if a dl button doesn't exist
+          let checkForButton = tableBlocks[i].getElementsByClassName('download-table-button').length;
+          if (!checkForButton) {
+            // get the blockid from the parent div.id
+            let blockID = tableBlocks[i].closest(".roam-block").id
+            
+            // add the copy button
+            createButton(blockID,tableBlocks[i])
+            
           }
+          
       }
     }
     });
+    // add to the global list of observers
     runners['observers'] = [tableObserver]
 
   console.log("load export table plugin");
@@ -96,7 +91,11 @@ function onunload() {
     const element = runners['observers'][index];
     element.disconnect()
   }
-
+  // remove all parts of the button
+  const buttons = document.querySelectorAll('.download-table-button');
+  buttons.forEach(btn => {
+      btn.remove();
+  });
   console.log("unload export table plugin");
 }
 
