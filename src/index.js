@@ -48,9 +48,10 @@ function createButton(blockID, DOMLocation){
     // attr tables have a slightly different HTML structure 
     if (DOMLocation.querySelector("thead")) {
       var firstCell = DOMLocation.getElementsByTagName("th")[0]
+      mainButton.classList.add('hoveronly')
       firstCell.insertAdjacentElement("beforeend", mainButton);
     } else {
-      // for regular tables use the hoverhide
+      // for regular tables use the existing hoverhide parent
       let hoverHide = DOMLocation.querySelector(".hoveronly")
 
       hoverHide.insertAdjacentElement("afterbegin", mainButton);
@@ -58,13 +59,15 @@ function createButton(blockID, DOMLocation){
     }
 }
 
+
+
 async function onload() {
 // create observer
   var tableObserver = createObserver(() => {
+
     if ( document.querySelectorAll(".rm-table")) {
       
       // this is regular tables only
-        // let tableBlocks = document.querySelectorAll(".rm-table")
         document.querySelectorAll(".rm-table").forEach(function(tableBlock){
           if(tableBlock.querySelector("table.dont-focus-block")){
             // only grab roam tables
@@ -79,10 +82,28 @@ async function onload() {
             }
           } 
         });
+        // to find attr tables the approach has to be different 
+        // attr tables have a different html structure and no hoverparent
 
+        document.querySelectorAll(".roam-table").forEach(function(tableBlock){
+          if(!tableBlock.querySelector("table.dont-focus-block")){
+            // only grab attr tables
+            // only move forward if a dl button doesn't exist
+            let checkForButton = tableBlock.getElementsByClassName('download-table-button').length;
+            if (!checkForButton) {
+              // get the blockid from the parent div.id
+              let blockID = tableBlock.closest(".roam-block").id
+              // add the copy button
+              createButton(blockID,tableBlock)
+            }
+            
+          } 
+        });
     }
-    // to find attr tables the approach has to be different
+    
     });
+    
+
     // add to the global list of observers
     runners['observers'] = [tableObserver]
 
