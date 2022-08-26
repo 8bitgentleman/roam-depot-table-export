@@ -1,4 +1,4 @@
-Adds a button to export a Roam table or Attribute table to CSV
+Adds a button on hover to export a Roam table or Attribute table to CSV
 
 
 ## Example 
