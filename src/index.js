@@ -40,44 +40,48 @@ function download_table_as_csv(block_id, separator = ',') {
 function createButton(blockID, DOMLocation){
   // create the icon button
     var mainButton = createIconButton("download");
-    mainButton.classList.add("download-table-button");
+    mainButton.classList.add("download-table-button", "dont-focus-block");
     mainButton.onclick = () => {
       download_table_as_csv(blockID)
     }
-    mainButton.setAttribute("style", "float: right; z-index: 10;");
 
     // attr tables have a slightly different HTML structure 
     if (DOMLocation.querySelector("thead")) {
       var firstCell = DOMLocation.getElementsByTagName("th")[0]
+      firstCell.insertAdjacentElement("beforeend", mainButton);
     } else {
-        var firstCell = DOMLocation.getElementsByTagName("td")[0]
+      // for regular tables use the hoverhide
+      let hoverHide = DOMLocation.querySelector(".hoveronly")
+
+      hoverHide.insertAdjacentElement("afterbegin", mainButton);
+      hoverHide.appendChild(mainButton)
     }
-    
-    firstCell.insertAdjacentElement("beforeend", mainButton);
-  
 }
 
-
-
-async function onload({ extensionAPI }) {
+async function onload() {
 // create observer
   var tableObserver = createObserver(() => {
-    if ( document.querySelectorAll(".roam-table")) {
-        let tableBlocks = document.querySelectorAll(".roam-table")
-        for (let i = 0; i < tableBlocks.length; i++) {
-          // only move forward if a dl button doesn't exist
-          let checkForButton = tableBlocks[i].getElementsByClassName('download-table-button').length;
-          if (!checkForButton) {
-            // get the blockid from the parent div.id
-            let blockID = tableBlocks[i].closest(".roam-block").id
-            
-            // add the copy button
-            createButton(blockID,tableBlocks[i])
-            
-          }
-          
-      }
+    if ( document.querySelectorAll(".rm-table")) {
+      
+      // this is regular tables only
+        // let tableBlocks = document.querySelectorAll(".rm-table")
+        document.querySelectorAll(".rm-table").forEach(function(tableBlock){
+          if(tableBlock.querySelector("table.dont-focus-block")){
+            // only grab roam tables
+            // only move forward if a dl button doesn't exist
+            let checkForButton = tableBlock.getElementsByClassName('download-table-button').length;
+            if (!checkForButton) {
+              // get the blockid from the parent div.id
+              let blockID = tableBlock.closest(".roam-block").id
+              // add the copy button
+              createButton(blockID,tableBlock)
+              
+            }
+          } 
+        });
+
     }
+    // to find attr tables the approach has to be different
     });
     // add to the global list of observers
     runners['observers'] = [tableObserver]
